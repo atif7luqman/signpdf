@@ -1,0 +1,92 @@
+import { Viewer, Worker } from '@react-pdf-viewer/core';
+import { defaultLayoutPlugin } from '@react-pdf-viewer/default-layout';
+import '@react-pdf-viewer/core/lib/styles/index.css';
+import '@react-pdf-viewer/default-layout/lib/styles/index.css';
+
+
+import React, { useState } from 'react';
+import { Upload, Button, message, Row, Col } from 'antd';
+import { UploadOutlined, EyeOutlined, SaveOutlined, DeleteOutlined } from '@ant-design/icons';
+import { SignatureCanvas } from 'react-signature-canvas';
+
+const App = () => {
+  const [pdfFile, setPDFFile] = useState(null);
+  const [viewPDF, setViewPDF] = useState(null);
+  const [signature, setSignature] = useState(null);
+
+  const newPlugin = defaultLayoutPlugin();
+
+  const beforeUpload = (file) => {
+    const isPDF = file.type === 'application/pdf';
+    if (!isPDF) {
+      message.error('You can only upload PDF files!');
+    } else {
+      setPDFFile(file);
+      setViewPDF(null);
+    }
+    return false;
+  };
+
+  const handlePreviewPDF = () => {
+    setViewPDF(pdfFile);
+  };
+
+  const handleSaveSignature = () => {
+    if (signature.isEmpty()) {
+      message.warning('Please provide a signature.');
+    } else {
+      // Perform any necessary actions with the signature, e.g., save it.
+      message.success('Signature saved successfully.');
+    }
+  };
+
+  const handleClearSignature = () => {
+    signature.clear();
+  };
+
+  return (
+    <div style={{ padding: '20px' }}>
+      {/* Section 1: PDF Upload and Preview */}
+      <Row gutter={16}>
+        <Col span={12}>
+          <h2>Section 1: PDF Upload and Preview</h2>
+          <Upload
+            beforeUpload={beforeUpload}
+            showUploadList={false}
+          >
+            <Button icon={<UploadOutlined />}>Upload PDF</Button>
+          </Upload>
+          {pdfFile && (
+            <>
+              <Button icon={<EyeOutlined />} onClick={handlePreviewPDF} style={{ margin: '10px 0' }}>
+                Preview PDF
+              </Button>
+              <Worker workerUrl="https://unpkg.com/pdfjs-dist@3.4.120/build/pdf.worker.min.js">
+                {viewPDF && (
+                  <Viewer fileUrl={viewPDF} plugins={[newPlugin]} />
+                )}
+              </Worker>
+            </>
+          )}
+        </Col>
+
+        {/* Section 2: Signature Input */}
+        <Col span={12}>
+          <h2>Section 2: Signature Input</h2>
+          <SignatureCanvas
+            ref={(ref) => setSignature(ref)}
+            canvasProps={{ className: 'signature-canvas', width: 300, height: 150, border: '1px solid #ddd' }}
+          />
+          <Button icon={<SaveOutlined />} onClick={handleSaveSignature} style={{ margin: '10px 0' }}>
+            Save Signature
+          </Button>
+          <Button icon={<DeleteOutlined />} onClick={handleClearSignature} danger>
+            Clear Signature
+          </Button>
+        </Col>
+      </Row>
+    </div>
+  );
+};
+
+export default App;
